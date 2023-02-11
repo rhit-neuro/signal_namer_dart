@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'package:event_listener/event_listener.dart';
 import 'package:excel/excel.dart';
 
+import 'components/logManager.dart';
 import 'models/Error.dart';
 import 'models/Signal.dart';
 
@@ -31,7 +33,7 @@ class SignalNamer {
   findFromFile(dynamic filePath, {bool fromWeb = false}) {
     var openFile;
     if (fromWeb) {
-      print("Attempting File.fromRaw");
+      // print("Attempting File.fromRaw");
       openFile = File.fromRawPath(filePath);
     } else {
       openFile = File(filePath);
@@ -60,7 +62,7 @@ class SignalNamer {
     var bytes = openFile.readAsBytesSync();
     Excel excel = Excel.decodeBytes(bytes);
     stdout.write("Done!\n");
-    print("Note: XLSX read runs in directory mode");
+    LogManager.instance.addLog("Note: XLSX read runs in directory mode");
     stdout.write("Loading Signals...\n");
     dirMode = true;
     dirMap.clear();
@@ -159,7 +161,7 @@ class SignalNamer {
     //   totalSignals = totalSignals + x;
     // }
     // print("Done, found $totalSignals total");
-    print(
+    LogManager.instance.addLog(
         "All Signals loaded! Found $totalSignals from ${excel.sheets.length - 1} 'files'");
   }
 
@@ -212,7 +214,7 @@ class SignalNamer {
   }
 
   findSignals(List<String> lines, String currentFile) {
-    print("Starting Phase 1 (Identify possible signals)");
+    //print("Starting Phase 1 (Identify possible signals)");
     List<Signal> pass1 = [];
     int lineNumb = 0;
     for (String line in lines) {
@@ -225,7 +227,8 @@ class SignalNamer {
       }
       lineNumb++;
     }
-    print("Phase 1 complete, found: ${pass1.length} notable signals");
+    LogManager.instance
+        .addLog("Phase 1 complete, found: ${pass1.length} notable signals");
     if (pass1.length == 0) {
       errors.add(ErrorObj(
           content: "No signals found in file (Or empty file)",
@@ -234,10 +237,12 @@ class SignalNamer {
           fullLine: "N/A",
           type: "no signals"));
       failures++;
-      print("No signals found. Please verify you have the correct file");
+      LogManager.instance
+          .addLog("No signals found. Please verify you have the correct file");
       return [];
     }
-    print("Starting Phase 2 (Filter out commented signals)");
+    LogManager.instance
+        .addLog("Starting Phase 2 (Filter out commented signals)");
     List<Signal> pass2 = [];
     for (Signal currentSignal in pass1) {
       if (!checkIsCommented(currentSignal.rawLine)) {
@@ -246,9 +251,10 @@ class SignalNamer {
         // print("Ignoring ${currentSignal.rawLine}");
       }
     }
-    print("Phase 2 complete, found ${pass2.length} uncommented signals");
+    LogManager.instance
+        .addLog("Phase 2 complete, found ${pass2.length} uncommented signals");
     if (pass2.length == 0) {
-      print(
+      LogManager.instance.addLog(
           "No uncommented signals found. Please make sure you have valid signals in your file.");
       errors.add(ErrorObj(
           content: "No uncommented signals found in file (Or empty file)",
@@ -259,7 +265,7 @@ class SignalNamer {
       failures++;
       return;
     }
-    print(
+    LogManager.instance.addLog(
         "Starting Phase 3 (Finding multiple signals in a line and find Names ");
     List<Signal> pass3 = [];
     for (Signal currentSignal in pass2) {
@@ -267,12 +273,13 @@ class SignalNamer {
       workingLine = workingLine.replaceAll(' ', '');
       workingLine = workingLine.replaceAll(";", "");
       List<String> splitLine = workingLine.split(",");
+      // splitLine = splitLine.last.split(commentStyle);
 
       // print("original $workingLine split: $splitLine");
       bool busChain = false;
       int bl = 0;
       for (String signalName in splitLine) {
-        // print(signalName);
+        // print("Name: $signalName");
         if (signalName != "" && signalName != " ") {
           if (checkIsCommented(signalName)) {
             break;
@@ -300,7 +307,11 @@ class SignalNamer {
               newSig.isBus = false;
             }
           } else {
+            // print("splitName: ${splitName}");
             signalName = splitName.last;
+            if (signalName.contains(commentStyle)) {
+              signalName = signalName.split(commentStyle).first;
+            }
             String busString = splitName.first.replaceAll("[", "");
             List<String> busStringsplit = busString.split(":");
             try {
@@ -308,7 +319,8 @@ class SignalNamer {
               int numberLast = int.parse(busStringsplit.last);
               bl = (numberLast - numberFirst).abs() + 1;
             } on FormatException {
-              print("Unhandled: This tool can't do params yet");
+              // LogManager.instance
+              //     .addLog("Unhandled: This tool can't do params yet");
               newSig.comment =
                   "FIXME: Either invalid signal or unable to determine bus length";
               errors.add(ErrorObj(
@@ -330,21 +342,25 @@ class SignalNamer {
         }
       }
     }
-    print("Phase 3 complete. Found ${pass3.length} signals");
-    print("Starting Phase 4 (Parsing comments)");
+    LogManager.instance
+        .addLog("Phase 3 complete. Found ${pass3.length} signals");
+    LogManager.instance.addLog("Starting Phase 4 (Parsing comments)");
     List<Signal> pass4 = parseComments(pass3);
-    print("Phase 4 completed.");
-    print("Done $failures possible failures / incomplete signals");
+    LogManager.instance.addLog("Phase 4 completed.");
+    LogManager.instance
+        .addLog("Done $failures possible failures / incomplete signals");
     return pass4;
   }
 
   List<Signal> parseComments(List<Signal> signals) {
     for (Signal signal in signals) {
       List<String> splitLine = signal.rawLine.split(commentStyle);
+      // print("Line:$splitLine");
       if (signal.comment == "") {
         if (splitLine.length == 1) {
           signal.comment = "";
         } else {
+          // print("comment was: ${splitLine.last}");
           signal.comment = splitLine.last;
         }
       }
@@ -370,7 +386,9 @@ class SignalNamer {
     try {
       for (var entity in Dir.listSync(recursive: true)) {
         if (entity.path.split(".").last == "v") {
-          print("Processing: ${entity.path}");
+          LogManager.instance.addLog(
+              "=============================================================");
+          LogManager.instance.addLog("Processing: ${entity.path}");
           findFromFile(entity.path);
           dirMap[entity.path] = foundSignals;
         }
@@ -378,7 +396,8 @@ class SignalNamer {
     } on FileSystemException catch (err) {
       return err.osError!.message;
     }
-    print("Done!\n");
+    LogManager.instance.addLog("Done!\n");
+    // LogManager.instance.eventListener.emit("LogDone", "from directory find");
   }
 
   Excel exportToXLSX(String filename, String sheet, List<Signal> signals,
@@ -396,16 +415,16 @@ class SignalNamer {
     if (File(filename).existsSync()) {
       if (existing != null) {
         decoder = existing;
-        print("Using existing Excel instance");
+        LogManager.instance.addLog("Using existing Excel instance");
       } else {
         decoder = Excel.createExcel();
       }
     } else {
-      print("Creating $filename for signal $sheet");
+      LogManager.instance.addLog("Creating $filename for signal $sheet");
       decoder = Excel.createExcel();
     }
     if (decoder.sheets.containsKey(sheet)) {
-      print("Skipping duplicate sheet");
+      LogManager.instance.addLog("Skipping duplicate sheet");
     } else {
       Sheet sheetObject = decoder[sheet];
 
@@ -433,7 +452,7 @@ class SignalNamer {
 
       for (int i = 0; i < signals.length; i++) {
         Signal signal = signals[i];
-        print("Writing signal: $signal");
+        LogManager.instance.addLog("Writing signal: $signal");
         sheetObject
             .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i + 1))
             .value = signal.signalName;
@@ -499,13 +518,13 @@ class SignalNamer {
               .value =
           "NOTE: This file was automatically generated by the signal namer application. There may be missing or incorrect data.";
 
-      print("Last time, exporting");
+      LogManager.instance.addLog("Last time, exporting");
 
       var fileBytes = decoder.save(fileName: filename);
       File(filename)
         ..createSync(recursive: true)
         ..writeAsBytesSync(fileBytes!);
-      print("Wrote $filename");
+      LogManager.instance.addLog("Wrote $filename");
     }
 
     return decoder;

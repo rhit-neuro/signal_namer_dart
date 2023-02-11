@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:signal_namer_dart/components/logManager.dart';
 import 'package:signal_namer_dart/pages/directoryPage.dart';
 import 'package:signal_namer_dart/signalNamer.dart';
 
@@ -76,6 +77,8 @@ class SignalSideBar extends StatelessWidget {
             title: ElevatedButton(
                 onPressed: () {
                   SignalNamer.instance.dirMap = Map();
+                  SignalNamer.instance.errors = [];
+                  LogManager.instance.logs = [];
                   if (dirClearCallback != null) {
                     dirClearCallback!();
                   }

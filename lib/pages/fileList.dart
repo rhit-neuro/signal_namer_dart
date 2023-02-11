@@ -11,6 +11,8 @@ import '../main.dart';
 import '../models/Signal.dart';
 import '../signalNamer.dart';
 import '../utils/fileUtils.dart';
+import 'errorsPage.dart';
+import 'logPage.dart';
 
 class FileListPage extends StatefulWidget {
   var signalArray;
@@ -37,21 +39,22 @@ class _FileListPageState extends State<FileListPage> {
           (element) => element.signalName == currentSignal.signalName);
       // signalNames.removeWhere((element)=> element.);
       signalNames = [];
-      widget.signalArray.forEach((signal) {
-        signalNames.add(ListTile(
-            title: Text(
-              signal.signalName,
-              style: const TextStyle(fontSize: 18, color: Colors.black),
-            ),
-            trailing: IconButton(
-              color: Colors.red,
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: (() {
-                // print("You pressed a delete button at ${signal.storedAt}");
-                removeFromList(signal);
-              }),
-            )));
-      });
+      // widget.signalArray.forEach((signal) {
+      //   signalNames.add(ListTile(
+      //       title: Text(
+      //         signal.signalName,
+      //         style: const TextStyle(fontSize: 18, color: Colors.black),
+      //       ),
+      //       trailing: IconButton(
+      //         color: Colors.red,
+      //         icon: const Icon(Icons.delete, color: Colors.red),
+      //         onPressed: (() {
+      //           // print("You pressed a delete button at ${signal.storedAt}");
+      //           removeFromList(signal);
+      //         }),
+      //       )));
+      // });
+      _rebuidlList();
     });
   }
 
@@ -70,16 +73,34 @@ class _FileListPageState extends State<FileListPage> {
     for (Signal signal in widget.signalArray) {
       setState(() {
         signalNames.add(ListTile(
+            leading: IconButton(
+                // color: Colors.red,
+                icon: Icon(
+                  Icons.delete,
+                ),
+                onPressed: (() {
+                  // print("You pressed a delete button at ${signal.storedAt}");
+                  removeFromList(signal);
+                })),
+            tileColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.black, width: 1),
+              borderRadius: BorderRadius.circular(5),
+            ),
             title: Text(
               signal.signalName,
               style: const TextStyle(fontSize: 18, color: Colors.black),
             ),
+            subtitle:
+                Text((signal.comment == "") ? "Not Labeled" : signal.comment),
             trailing: IconButton(
-              color: Colors.red,
-              icon: Icon(Icons.delete, color: Colors.red),
+              // color: Colors.red,
+              icon: Icon(
+                Icons.chevron_right,
+              ),
               onPressed: (() {
                 // print("You pressed a delete button at ${signal.storedAt}");
-                removeFromList(signal);
+                // removeFromList(signal);
               }),
             )));
       });
@@ -93,6 +114,39 @@ class _FileListPageState extends State<FileListPage> {
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
           title: Text("Signal Namer"),
+          actions: [
+            IconButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (BuildContext context) {
+                      return LogPage();
+                    },
+                  ),
+                );
+              },
+              icon: Icon(Icons.info),
+            ),
+            IconButton(
+              color: Colors.orange[200],
+              onPressed: (SignalNamer.instance.errors.isEmpty)
+                  ? null
+                  : () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (BuildContext context) {
+                            return ErrorsPage(
+                                forFile:
+                                    this.widget.signalArray.first.fileName);
+                          },
+                        ),
+                      );
+                    },
+              icon: Icon(Icons.warning),
+            )
+          ],
         ),
         body: Center(
           // Center is a layout widget. It takes a single child and positions it
@@ -101,15 +155,56 @@ class _FileListPageState extends State<FileListPage> {
             children: signalNames,
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            signalNames = [];
-            getFile(() {
-              _rebuidlList();
-            });
-          },
-          child: const Icon(Icons.file_open),
-        ),
+        floatingActionButton: (!widget.wasPushed)
+            ? FloatingActionButton(
+                onPressed: () {
+                  signalNames = [];
+                  getFile(() {
+                    widget.signalArray = SignalNamer.instance.foundSignals;
+                    _rebuidlList();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text((SignalNamer.instance.errors.isEmpty)
+                              ? "Found ${SignalNamer.instance.foundSignals.length} signals"
+                              : "Found ${SignalNamer.instance.foundSignals.length} signals with ${SignalNamer.instance.errors.length} possible failures"),
+                          TextButton(
+                              onPressed: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (BuildContext context) {
+                                      return LogPage();
+                                    },
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                "View Log",
+                                style: TextStyle(color: Colors.blue),
+                              )),
+                        ],
+                      ),
+                      duration: Duration(seconds: 5),
+                      action: SnackBarAction(
+                          label: "View Errors",
+                          onPressed: (() async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (BuildContext context) {
+                                  return ErrorsPage();
+                                },
+                              ),
+                            );
+                          })),
+                    ));
+                  });
+                },
+                child: const Icon(Icons.file_open),
+              )
+            : null,
         drawer: (!widget
                 .wasPushed) // only show drawer if we aren't coming from directory
             ? SignalSideBar(currentPage: PAGES.fileList)

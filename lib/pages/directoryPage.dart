@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:signal_namer_dart/main.dart';
 import 'package:signal_namer_dart/pages/errorsPage.dart';
 import 'package:signal_namer_dart/pages/fileList.dart';
+import 'package:signal_namer_dart/pages/logPage.dart';
 import 'package:signal_namer_dart/utils/fileUtils.dart';
 
 import '../models/SideBar.dart';
@@ -28,8 +30,21 @@ class _DirectoryPageState extends State<DirectoryPage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text("Signal Namer"),
+        title: Text("Directory Import"),
         actions: [
+          IconButton(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (BuildContext context) {
+                    return LogPage();
+                  },
+                ),
+              );
+            },
+            icon: Icon(Icons.info),
+          ),
           IconButton(
             color: Colors.orange[200],
             onPressed: (SignalNamer.instance.errors.isEmpty)
@@ -44,7 +59,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
                       ),
                     );
                   },
-            icon: Icon(Icons.error),
+            icon: Icon(Icons.warning),
           )
         ],
       ),
@@ -110,7 +125,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
             setState(() {});
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text("$signalName removed from list!"),
-                duration: Duration(seconds: 5),
+                duration: Duration(seconds: 1),
                 action: SnackBarAction(
                     label: "Undo",
                     onPressed: () {
@@ -155,6 +170,10 @@ class _DirectoryPageState extends State<DirectoryPage> {
     });
   }
 
+  // Future<String?> _spawnAsyncDirFind(String result) async {
+  //   return await compute(SignalNamer.instance.directoryFind, result);
+  // }
+
   loadDirectories() async {
     activelyLoading = true;
     setState(() {});
@@ -169,6 +188,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
       ));
       return;
     }
+    // String? error = await _spawnAsyncDirFind(result);
     String? error = SignalNamer.instance.directoryFind(result);
     if (error != null) {
       activelyLoading = false;
@@ -190,9 +210,29 @@ class _DirectoryPageState extends State<DirectoryPage> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text((SignalNamer.instance.errors.isEmpty)
-            ? "Found ${SignalNamer.instance.dirMap.length} verilog files"
-            : "Found ${SignalNamer.instance.dirMap.length} verilog files with ${SignalNamer.instance.errors.length} possible failures"),
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text((SignalNamer.instance.errors.isEmpty)
+                ? "Found ${SignalNamer.instance.dirMap.length} verilog files"
+                : "Found ${SignalNamer.instance.dirMap.length} verilog files with ${SignalNamer.instance.errors.length} possible failures"),
+            TextButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (BuildContext context) {
+                        return LogPage();
+                      },
+                    ),
+                  );
+                },
+                child: Text(
+                  "View Log",
+                  style: TextStyle(color: Colors.blue),
+                )),
+          ],
+        ),
         duration: Duration(seconds: 5),
         action: SnackBarAction(
             label: "View Errors",
