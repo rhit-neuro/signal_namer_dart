@@ -13,7 +13,8 @@ import '../models/Signal.dart';
 import '../signalNamer.dart';
 
 class DirectoryPage extends StatefulWidget {
-  const DirectoryPage({super.key});
+  bool fromExcel;
+  DirectoryPage({super.key, this.fromExcel = false});
 
   @override
   State<DirectoryPage> createState() => _DirectoryPageState();
@@ -21,10 +22,18 @@ class DirectoryPage extends StatefulWidget {
 
 class _DirectoryPageState extends State<DirectoryPage> {
   @override
+  initState() {
+    super.initState();
+    if (this.widget.fromExcel) {
+      _buildList();
+    }
+  }
+
   List<ListTile> directoryList = [];
   bool activelyLoading = false;
   List<Signal> lastDeleted = [];
   String lastDeletedKey = "";
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -91,7 +100,13 @@ class _DirectoryPageState extends State<DirectoryPage> {
       drawer: SignalSideBar(
         currentPage: PAGES.directoryList,
         dirClearCallback: () {
+          _buildList();
           setState(() {});
+        },
+        loadExcelCallback: () {
+          setState(() {
+            _buildList();
+          });
         },
       ),
     );
@@ -116,6 +131,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
   }
 
   _buildList() {
+    directoryList = [];
     SignalNamer.instance.dirMap.keys.toList().forEach((signalName) {
       directoryList.add(ListTile(
         leading: IconButton(

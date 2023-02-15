@@ -32,13 +32,21 @@ dependencies:
   flutter:
     sdk: flutter
   file_picker: ^5.2.4
-  window_manager: ^0.2.8
-  excel: ^2.0.1
+  # window_manager: ^0.2.8
+  # excel: ^2.0.1
+  excel: 2.0.0-null-safety-3 # This one fixes a bug in 2.0.1
+  # fixnum: ^1.0.1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   event_listener: ^0.2.0
-
+  
+ 
+  # cloud_firestore: ^3.5.1
+  # firebase_auth: ^3.11.2
+  # firebase_core: ^1.24.0
+  # firebase_ui_oauth_google: ^1.0.0-dev.0
+  # firebase_ui_auth: ^1.0.0-dev.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

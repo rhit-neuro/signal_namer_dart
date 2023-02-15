@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "14819230507",
+    "project_id": "deca-documenter",
+    "storage_bucket": "deca-documenter.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:14819230507:android:1495778ff0348e3a9f3b6e",
+        "android_client_info": {
+          "package_name": "com.example.signal_namer_dart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "14819230507-qqdufvj9najbb895h7e6b077p72in4qj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBDinP_uniTJj6Tw8Bw4JfoZkLhxH4kiw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "14819230507-qqdufvj9najbb895h7e6b077p72in4qj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

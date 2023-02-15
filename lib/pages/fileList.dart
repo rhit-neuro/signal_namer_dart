@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:signal_namer_dart/components/searchDelegate.dart';
 import 'package:signal_namer_dart/models/SideBar.dart';
+import 'package:signal_namer_dart/pages/signalPage.dart';
 
 import '../alert.dart';
 import '../main.dart';
@@ -98,10 +100,19 @@ class _FileListPageState extends State<FileListPage> {
               icon: Icon(
                 Icons.chevron_right,
               ),
-              onPressed: (() {
-                // print("You pressed a delete button at ${signal.storedAt}");
-                // removeFromList(signal);
-              }),
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (BuildContext context) {
+                      return SignalPage(
+                        signal: signal,
+                      );
+                    },
+                  ),
+                );
+                setState(() {});
+              },
             )));
       });
     }
@@ -113,8 +124,15 @@ class _FileListPageState extends State<FileListPage> {
         appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text("Signal Namer"),
+          title: Text("DECA Documenter"),
+
           actions: [
+            IconButton(
+              onPressed: () {
+                showSearch(context: context, delegate: CustomSearchDelegate());
+              },
+              icon: Icon(Icons.search),
+            ),
             IconButton(
               onPressed: () async {
                 await Navigator.push(
@@ -159,7 +177,7 @@ class _FileListPageState extends State<FileListPage> {
             ? FloatingActionButton(
                 onPressed: () {
                   signalNames = [];
-                  getFile(() {
+                  fromVerilog(() {
                     widget.signalArray = SignalNamer.instance.foundSignals;
                     _rebuidlList();
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

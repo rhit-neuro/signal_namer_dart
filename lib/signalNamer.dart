@@ -34,7 +34,8 @@ class SignalNamer {
     var openFile;
     if (fromWeb) {
       // print("Attempting File.fromRaw");
-      openFile = File.fromRawPath(filePath);
+      // openFile = File()
+      print("Web does  not work");
     } else {
       openFile = File(filePath);
     }
@@ -61,16 +62,27 @@ class SignalNamer {
 
     var bytes = openFile.readAsBytesSync();
     Excel excel = Excel.decodeBytes(bytes);
-    stdout.write("Done!\n");
+    // stdout.write("Done!\n");
+    LogManager.instance.addLog(
+        "=============================================================");
     LogManager.instance.addLog("Note: XLSX read runs in directory mode");
-    stdout.write("Loading Signals...\n");
+    errors.add(ErrorObj(
+        content: "NOTE: Loading from XLSX runs in directory mode",
+        line: -1,
+        fileName: "System",
+        fullLine: "N/A",
+        type: "Notice"));
+    LogManager.instance.addLog("Loading Signals...\n");
     dirMode = true;
     dirMap.clear();
     int totalSignals = 0;
     for (String sheet in excel.sheets.keys) {
+      String tmpLog = "";
+
       if (sheet == "NOTE") {
         continue;
       }
+      tmpLog += "    $sheet";
       stdout.write("    $sheet");
       String signalString = "Placeholder!!!!!!!";
       int columns = 0;
@@ -143,12 +155,15 @@ class SignalNamer {
           signals++;
           // totalSignals++;
           stdout.write(".");
+          tmpLog += ".";
 
           dirMap[sheet]?.add(currentSignal);
           row++;
         }
       }
-      stdout.write("DONE (found $signals)\n");
+      LogManager.instance.addLog(tmpLog + "DONE (found $signals)");
+
+      // stdout.write("DONE (found $signals)\n");
     }
     // for (String sheet in dirMap.keys) {
     //   stdout.write("$sheet");
@@ -163,6 +178,8 @@ class SignalNamer {
     // print("Done, found $totalSignals total");
     LogManager.instance.addLog(
         "All Signals loaded! Found $totalSignals from ${excel.sheets.length - 1} 'files'");
+    LogManager.instance.addLog(
+        "=============================================================");
   }
 
   SignalType getTypeFromString(String typeString) {
@@ -187,7 +204,9 @@ class SignalNamer {
         if (line.contains("output") && line.contains("reg")) {
           return Signal.withRawLine(SignalType.outputReg, line);
         } else {
-          return Signal.withRawLine(getTypeFromString(type), line);
+          if (!line.contains("localparam")) {
+            return Signal.withRawLine(getTypeFromString(type), line);
+          }
         }
       }
     }

@@ -16,24 +16,39 @@ getDir() async {
   return result;
 }
 
-void getFile(callbackFunc) async {
+Future<String?> getFile() async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
     dialogTitle: "Pick a Verilog file",
     allowMultiple: false,
   );
   dynamic? filename = "";
   if (kIsWeb) {
-    print("Web detected, trying to get path from bytes.");
-    print(result);
-    filename = result?.files.first.bytes;
+    // print("Web detected, trying to get path from bytes.");
+    // print(result);
+    // filename = result?.files.first.bytes;
+    // THIS IS BROKEN :( :( :( :(
   } else {
     filename = result?.paths.first!;
   }
 
   print("Filepath: $filename");
+  return filename;
+}
+
+void fromVerilog(callbackFunc) async {
+  String? filename = await getFile();
   if (filename != null) {
     SignalNamer.instance.findFromFile(filename, fromWeb: kIsWeb);
-    int i = 0;
+    // int i = 0;
+    callbackFunc();
+  }
+}
+
+void fromExcel(callbackFunc) async {
+  String? filename = await getFile();
+  if (filename != null) {
+    SignalNamer.instance.findFromXLSX(filename);
+    // int i = 0;
     callbackFunc();
   }
 }
