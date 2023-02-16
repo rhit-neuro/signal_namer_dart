@@ -40,6 +40,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   event_listener: ^0.2.0
+  diff_match_patch: ^0.4.1
   
  
   # cloud_firestore: ^3.5.1

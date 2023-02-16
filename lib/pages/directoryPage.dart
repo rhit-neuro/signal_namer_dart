@@ -1,13 +1,13 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:signal_namer_dart/components/dirSearchDelegate.dart';
+
 import 'package:signal_namer_dart/main.dart';
 import 'package:signal_namer_dart/pages/errorsPage.dart';
 import 'package:signal_namer_dart/pages/fileList.dart';
 import 'package:signal_namer_dart/pages/logPage.dart';
 import 'package:signal_namer_dart/utils/fileUtils.dart';
 
+import '../components/searchDelegate.dart';
 import '../models/SideBar.dart';
 import '../models/Signal.dart';
 import '../signalNamer.dart';
@@ -21,12 +21,11 @@ class DirectoryPage extends StatefulWidget {
 }
 
 class _DirectoryPageState extends State<DirectoryPage> {
+  final GlobalKey<TooltipState> dirSearchTooltipkey = GlobalKey<TooltipState>();
   @override
   initState() {
     super.initState();
-    if (this.widget.fromExcel) {
-      _buildList();
-    }
+    _buildList();
   }
 
   List<ListTile> directoryList = [];
@@ -41,6 +40,21 @@ class _DirectoryPageState extends State<DirectoryPage> {
         // the App.build method, and use it to set our appbar title.
         title: Text("Directory Import"),
         actions: [
+          Tooltip(
+            key: dirSearchTooltipkey,
+            triggerMode: TooltipTriggerMode.manual,
+            message: "Search for a file",
+            child: IconButton(
+              onPressed: () {
+                showSearch(
+                    context: context,
+                    delegate: DirectorySearchDelegate.fromList(
+                        searchTerms:
+                            SignalNamer.instance.dirMap.keys.toList()));
+              },
+              icon: Icon(Icons.search),
+            ),
+          ),
           IconButton(
             onPressed: () async {
               await Navigator.push(

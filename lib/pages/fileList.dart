@@ -26,6 +26,8 @@ class FileListPage extends StatefulWidget {
 }
 
 class _FileListPageState extends State<FileListPage> {
+  final GlobalKey<TooltipState> searchTooltipkey = GlobalKey<TooltipState>();
+
   List<ListTile> signalNames = [];
   @override
   void initState() {
@@ -127,11 +129,19 @@ class _FileListPageState extends State<FileListPage> {
           title: Text("DECA Documenter"),
 
           actions: [
-            IconButton(
-              onPressed: () {
-                showSearch(context: context, delegate: CustomSearchDelegate());
-              },
-              icon: Icon(Icons.search),
+            Tooltip(
+              key: searchTooltipkey,
+              triggerMode: TooltipTriggerMode.manual,
+              message: "Search for a signal",
+              child: IconButton(
+                onPressed: () {
+                  showSearch(
+                      context: context,
+                      delegate: CustomSearchDelegate.fromList(
+                          searchTerms: widget.signalArray));
+                },
+                icon: Icon(Icons.search),
+              ),
             ),
             IconButton(
               onPressed: () async {

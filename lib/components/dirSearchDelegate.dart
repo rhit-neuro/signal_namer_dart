@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:signal_namer_dart/pages/fileList.dart';
+import 'package:signal_namer_dart/signalNamer.dart';
 
 import '../models/Signal.dart';
 import '../pages/signalPage.dart';
 
 // Modified from the following source: https://www.geeksforgeeks.org/flutter-search-bar/
-class CustomSearchDelegate extends SearchDelegate {
-  List<Signal> searchTerms = [];
+class DirectorySearchDelegate extends SearchDelegate {
+  List<String> searchTerms = [];
 
-  CustomSearchDelegate.fromList({required this.searchTerms});
+  DirectorySearchDelegate.fromList({required this.searchTerms});
 
 // first overwrite to
 // clear the search text
@@ -37,10 +39,10 @@ class CustomSearchDelegate extends SearchDelegate {
 // third overwrite to show query result
   @override
   Widget buildResults(BuildContext context) {
-    List<Signal> matchQuery = [];
-    for (var signal in searchTerms) {
-      if (signal.signalName.toLowerCase().contains(query.toLowerCase())) {
-        matchQuery.add(signal);
+    List<String> matchQuery = [];
+    for (var dir in searchTerms) {
+      if (dir.contains(query.toLowerCase())) {
+        matchQuery.add(dir);
       }
     }
     return ListView.builder(
@@ -48,7 +50,7 @@ class CustomSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         var result = matchQuery[index];
         return ListTile(
-          title: Text(result.signalName),
+          title: Text(result),
         );
       },
     );
@@ -58,10 +60,10 @@ class CustomSearchDelegate extends SearchDelegate {
 // querying process at the runtime
   @override
   Widget buildSuggestions(BuildContext context) {
-    List<Signal> matchQuery = [];
-    for (var signal in searchTerms) {
-      if (signal.signalName.toLowerCase().contains(query.toLowerCase())) {
-        matchQuery.add(signal);
+    List<String> matchQuery = [];
+    for (var dir in searchTerms) {
+      if (dir.toLowerCase().contains(query.toLowerCase())) {
+        matchQuery.add(dir);
       }
     }
     return ListView.builder(
@@ -75,11 +77,10 @@ class CustomSearchDelegate extends SearchDelegate {
             borderRadius: BorderRadius.circular(5),
           ),
           title: Text(
-            result.signalName,
+            result,
             style: const TextStyle(fontSize: 18, color: Colors.black),
           ),
-          subtitle:
-              Text((result.comment == "") ? "Not Labeled" : result.comment),
+          subtitle: Text(result),
           trailing: IconButton(
             // color: Colors.red,
             icon: Icon(
@@ -90,8 +91,9 @@ class CustomSearchDelegate extends SearchDelegate {
                 context,
                 MaterialPageRoute(
                   builder: (BuildContext context) {
-                    return SignalPage(
-                      signal: result,
+                    return FileListPage(
+                      signalArray: SignalNamer.instance.dirMap[result],
+                      wasPushed: true,
                     );
                   },
                 ),
