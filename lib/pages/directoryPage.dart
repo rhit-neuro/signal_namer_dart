@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:signal_namer_dart/components/dirSearchDelegate.dart';
 
 import 'package:signal_namer_dart/main.dart';
+import 'package:signal_namer_dart/pages/diffPage.dart';
 import 'package:signal_namer_dart/pages/errorsPage.dart';
 import 'package:signal_namer_dart/pages/fileList.dart';
 import 'package:signal_namer_dart/pages/logPage.dart';
@@ -22,6 +23,8 @@ class DirectoryPage extends StatefulWidget {
 
 class _DirectoryPageState extends State<DirectoryPage> {
   final GlobalKey<TooltipState> dirSearchTooltipkey = GlobalKey<TooltipState>();
+  final GlobalKey<TooltipState> projModeTooltipkey = GlobalKey<TooltipState>();
+
   @override
   initState() {
     super.initState();
@@ -50,11 +53,47 @@ class _DirectoryPageState extends State<DirectoryPage> {
                     context: context,
                     delegate: DirectorySearchDelegate.fromList(
                         searchTerms:
-                            SignalNamer.instance.dirMap.keys.toList()));
+                            SignalNamer.instance.signalMap.keys.toList()));
               },
               icon: Icon(Icons.search),
             ),
           ),
+          (!SignalNamer.instance.projectLoaded)
+              ? Tooltip(
+                  key: projModeTooltipkey,
+                  triggerMode: TooltipTriggerMode.manual,
+                  message:
+                      "Load current Excel file into project mode and open a new directory",
+                  child: IconButton(
+                    onPressed: (SignalNamer.instance.excelMode)
+                        ? () {
+                            setState(() {
+                              SignalNamer.instance.swapToProjectMode();
+                            });
+                          }
+                        : null,
+                    icon: Icon(Icons.change_circle),
+                  ),
+                )
+              : Tooltip(
+                  key: projModeTooltipkey,
+                  triggerMode: TooltipTriggerMode.manual,
+                  message:
+                      "Show changes between loaded project and current directory",
+                  child: IconButton(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (BuildContext context) {
+                            return DiffPage();
+                          },
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.difference),
+                  ),
+                ),
           IconButton(
             onPressed: () async {
               await Navigator.push(
@@ -86,7 +125,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
           )
         ],
       ),
-      body: (SignalNamer.instance.dirMap.length == 0)
+      body: (SignalNamer.instance.signalMap.length == 0)
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -132,12 +171,12 @@ class _DirectoryPageState extends State<DirectoryPage> {
       // print("Removing $currentDir");
       // int index = SignalNamer.instance.dirMap.keys.toList().indexOf(currentDir);
       // print("Removing $currentDir at index $index");
-      if (!SignalNamer.instance.dirMap.containsKey(currentDir)) {
+      if (!SignalNamer.instance.signalMap.containsKey(currentDir)) {
         return;
       }
       lastDeletedKey = currentDir;
-      lastDeleted = SignalNamer.instance.dirMap[currentDir]!;
-      SignalNamer.instance.dirMap.remove(currentDir);
+      lastDeleted = SignalNamer.instance.signalMap[currentDir]!;
+      SignalNamer.instance.signalMap.remove(currentDir);
       // signalNames.removeWhere((element)=> element.);
       directoryList = [];
       _buildList();
@@ -146,26 +185,26 @@ class _DirectoryPageState extends State<DirectoryPage> {
 
   _buildList() {
     directoryList = [];
-    SignalNamer.instance.dirMap.keys.toList().forEach((signalName) {
+    SignalNamer.instance.signalMap.keys.toList().forEach((signalName) {
       directoryList.add(ListTile(
         leading: IconButton(
           icon: Icon(Icons.delete),
           onPressed: () {
             removeFromList(signalName);
             setState(() {});
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text("$signalName removed from list!"),
-                duration: Duration(seconds: 1),
-                action: SnackBarAction(
-                    label: "Undo",
-                    onPressed: () {
-                      setState(() {
-                        SignalNamer.instance.dirMap[lastDeletedKey] =
-                            lastDeleted;
-                        directoryList = [];
-                        _buildList();
-                      });
-                    })));
+            // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            //     content: Text("$signalName removed from list!"),
+            //     duration: Duration(seconds: 1),
+            //     action: SnackBarAction(
+            //         label: "Undo",
+            //         onPressed: () {
+            //           setState(() {
+            //             SignalNamer.instance.signalMap[lastDeletedKey] =
+            //                 lastDeleted;
+            //             directoryList = [];
+            //             _buildList();
+            //           });
+            //         })));
           },
         ),
         tileColor: Colors.white,
@@ -188,7 +227,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
               MaterialPageRoute(
                 builder: (BuildContext context) {
                   return FileListPage(
-                    signalArray: SignalNamer.instance.dirMap[signalName],
+                    signalArray: SignalNamer.instance.signalMap[signalName],
                     wasPushed: true,
                   );
                 },
@@ -232,7 +271,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
     }
     setState(() {
       activelyLoading = false;
-      if (SignalNamer.instance.dirMap.length == 0) {
+      if (SignalNamer.instance.signalMap.length == 0) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("No Verilog files found!"),
           duration: Duration(seconds: 5),
@@ -244,8 +283,8 @@ class _DirectoryPageState extends State<DirectoryPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text((SignalNamer.instance.errors.isEmpty)
-                ? "Found ${SignalNamer.instance.dirMap.length} verilog files"
-                : "Found ${SignalNamer.instance.dirMap.length} verilog files with ${SignalNamer.instance.errors.length} possible failures"),
+                ? "Found ${SignalNamer.instance.signalMap.length} verilog files"
+                : "Found ${SignalNamer.instance.signalMap.length} verilog files with ${SignalNamer.instance.errors.length} possible failures"),
             TextButton(
                 onPressed: () async {
                   await Navigator.push(

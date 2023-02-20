@@ -92,7 +92,7 @@ class DirectorySearchDelegate extends SearchDelegate {
                 MaterialPageRoute(
                   builder: (BuildContext context) {
                     return FileListPage(
-                      signalArray: SignalNamer.instance.dirMap[result],
+                      signalArray: SignalNamer.instance.signalMap[result],
                       wasPushed: true,
                     );
                   },

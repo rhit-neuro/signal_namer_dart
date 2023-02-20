@@ -16,9 +16,9 @@ getDir() async {
   return result;
 }
 
-Future<String?> getFile() async {
+Future<String?> getFile(type) async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
-    dialogTitle: "Pick a Verilog file",
+    dialogTitle: "Pick a $type file",
     allowMultiple: false,
   );
   dynamic? filename = "";
@@ -36,7 +36,7 @@ Future<String?> getFile() async {
 }
 
 void fromVerilog(callbackFunc) async {
-  String? filename = await getFile();
+  String? filename = await getFile("Verilog");
   if (filename != null) {
     SignalNamer.instance.findFromFile(filename, fromWeb: kIsWeb);
     // int i = 0;
@@ -45,7 +45,7 @@ void fromVerilog(callbackFunc) async {
 }
 
 void fromExcel(callbackFunc) async {
-  String? filename = await getFile();
+  String? filename = await getFile("Excel");
   if (filename != null) {
     SignalNamer.instance.findFromXLSX(filename);
     // int i = 0;
@@ -56,18 +56,18 @@ void fromExcel(callbackFunc) async {
 void saveToExcel(BuildContext context) async {
   String? result = await FilePicker.platform.saveFile();
   if (result != null) {
-    if (SignalNamer.instance.dirMode) {
+    if (SignalNamer.instance.mapMode) {
       Excel? currentExcel = null;
       int i = 0;
-      for (String file in SignalNamer.instance.dirMap.keys) {
+      for (String file in SignalNamer.instance.signalMap.keys) {
         currentExcel = SignalNamer.instance.exportToXLSX(
             result,
             file.split("/").last.split(".").first,
-            SignalNamer.instance.dirMap[file]!,
+            SignalNamer.instance.signalMap[file]!,
             false,
             true,
             currentExcel,
-            (i == SignalNamer.instance.dirMap.length - 1));
+            (i == SignalNamer.instance.signalMap.length - 1));
         i++;
       }
     } else {

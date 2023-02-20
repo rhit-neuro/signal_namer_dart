@@ -89,7 +89,7 @@ class SignalSideBar extends StatelessWidget {
           ListTile(
             title: ElevatedButton(
               onPressed: () {
-                SignalNamer.instance.dirMap = Map();
+                SignalNamer.instance.signalMap = Map();
                 SignalNamer.instance.errors = [];
                 LogManager.instance.logs = [];
                 fromExcel(() async {
@@ -141,7 +141,7 @@ class SignalSideBar extends StatelessWidget {
           ListTile(
             title: ElevatedButton(
               onPressed: () {
-                SignalNamer.instance.dirMap = Map();
+                SignalNamer.instance.signalMap = Map();
                 SignalNamer.instance.errors = [];
                 LogManager.instance.logs = [];
                 if (dirClearCallback != null) {

@@ -26,10 +26,22 @@ class SignalNamer {
 
   List<Signal> foundSignals = [];
   int failures = 0;
-  bool dirMode = false;
+  bool mapMode = false;
+  bool excelMode = false;
   List<ErrorObj> errors = [];
-  Map<String, List<Signal>> dirMap = Map();
+  Map<String, List<Signal>> signalMap = Map();
+  Map<String, List<Signal>> loadedProject = Map();
+  bool projectLoaded = false;
   int totalSignals = 0;
+  //Swap Excel from being loaded in DIR mode to being loaded in project mode
+  swapToProjectMode() {
+    excelMode = false;
+    projectLoaded = true;
+    loadedProject = Map.from(signalMap);
+    signalMap = Map();
+    mapMode = false;
+  }
+
   findFromFile(dynamic filePath, {bool fromWeb = false}) {
     var openFile;
     if (fromWeb) {
@@ -59,7 +71,7 @@ class SignalNamer {
 
   findFromXLSX(String filePath) {
     var openFile = File(filePath);
-
+    excelMode = true;
     var bytes = openFile.readAsBytesSync();
     Excel excel = Excel.decodeBytes(bytes);
     // stdout.write("Done!\n");
@@ -73,8 +85,8 @@ class SignalNamer {
         fullLine: "N/A",
         type: "Notice"));
     LogManager.instance.addLog("Loading Signals...\n");
-    dirMode = true;
-    dirMap.clear();
+    mapMode = true;
+    signalMap.clear();
     int totalSignals = 0;
     for (String sheet in excel.sheets.keys) {
       String tmpLog = "";
@@ -100,7 +112,7 @@ class SignalNamer {
         }
         columns++;
       }
-      dirMap[sheet] = [];
+      signalMap[sheet] = [];
       // Signal Name	Bit Length	Is Bus	Signal Type	From File	Line Number	Comment
       int row = 1;
       int column = 0;
@@ -157,7 +169,7 @@ class SignalNamer {
           stdout.write(".");
           tmpLog += ".";
 
-          dirMap[sheet]?.add(currentSignal);
+          signalMap[sheet]?.add(currentSignal);
           row++;
         }
       }
@@ -401,7 +413,7 @@ class SignalNamer {
   String? directoryFind(String name) {
     var Dir = Directory(name);
 
-    dirMode = true;
+    mapMode = true;
     try {
       for (var entity in Dir.listSync(recursive: true)) {
         if (entity.path.split(".").last == "v") {
@@ -409,7 +421,7 @@ class SignalNamer {
               "=============================================================");
           LogManager.instance.addLog("Processing: ${entity.path}");
           findFromFile(entity.path);
-          dirMap[entity.path] = foundSignals;
+          signalMap[entity.path] = foundSignals;
         }
       }
     } on FileSystemException catch (err) {
@@ -548,4 +560,6 @@ class SignalNamer {
 
     return decoder;
   }
+
+  fileDiff() {}
 }
