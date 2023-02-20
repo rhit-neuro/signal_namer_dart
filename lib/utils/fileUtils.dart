@@ -8,8 +8,19 @@ import '../models/Signal.dart';
 import '../signalNamer.dart';
 
 getDir() async {
-  String? result = await FilePicker.platform
-      .getDirectoryPath(dialogTitle: "Pick a directory");
+  String? result = await FilePicker.platform.getDirectoryPath(
+    dialogTitle: "Pick a directory",
+  );
+  if (result == null) {
+    return;
+  }
+  return result;
+}
+
+getExcDir() async {
+  String? result = await FilePicker.platform.getDirectoryPath(
+    dialogTitle: "Pick a directory to exclude",
+  );
   if (result == null) {
     return;
   }

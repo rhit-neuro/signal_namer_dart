@@ -12,6 +12,7 @@ import '../components/searchDelegate.dart';
 import '../models/SideBar.dart';
 import '../models/Signal.dart';
 import '../signalNamer.dart';
+import 'excludePage.dart';
 
 class DirectoryPage extends StatefulWidget {
   bool fromExcel;
@@ -94,6 +95,19 @@ class _DirectoryPageState extends State<DirectoryPage> {
                     icon: Icon(Icons.difference),
                   ),
                 ),
+          IconButton(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (BuildContext context) {
+                    return ExcludePage();
+                  },
+                ),
+              );
+            },
+            icon: Icon(Icons.cancel),
+          ),
           IconButton(
             onPressed: () async {
               await Navigator.push(

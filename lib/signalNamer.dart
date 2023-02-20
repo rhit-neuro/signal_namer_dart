@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:event_listener/event_listener.dart';
 import 'package:excel/excel.dart';
+import 'package:signal_namer_dart/utils/fileUtils.dart';
 
 import 'components/logManager.dart';
 import 'models/Error.dart';
@@ -23,7 +24,7 @@ class SignalNamer {
   static final SignalNamer instance = SignalNamer._privateConstructor();
   SignalNamer._privateConstructor();
   List<String> dictionary = ["input", "output", "wire", "reg", "output reg"];
-
+  List<String> excludeList = [];
   List<Signal> foundSignals = [];
   int failures = 0;
   bool mapMode = false;
@@ -67,6 +68,10 @@ class SignalNamer {
       rtn.add(signal.toString());
     }
     return rtn;
+  }
+
+  addExcludeDir(String toAdd) {
+    excludeList.add(toAdd);
   }
 
   findFromXLSX(String filePath) {
