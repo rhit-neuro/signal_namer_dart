@@ -14,7 +14,7 @@ class DiffPage extends StatefulWidget {
 
 class _DiffPageState extends State<DiffPage> {
   int selectedDir = 0;
-  int selectedProj = 0;
+  int selectedProj = -1;
   bool _highlightDups = false;
   bool _highlightExisting = false;
 
@@ -158,7 +158,9 @@ class _DiffPageState extends State<DiffPage> {
                             context,
                             MaterialPageRoute(
                               builder: (BuildContext context) {
-                                return DiffFilePage();
+                                return DiffFilePage(
+                                    toDiff: SignalNamer.instance.signalMap.keys
+                                        .toList()[selectedDir]);
                               },
                             ),
                           );
@@ -192,10 +194,6 @@ class _DiffPageState extends State<DiffPage> {
                                 // print("You clicked highlight duplicates");
                                 _showFullPaths = value!;
                               })),
-                      IconButton(
-                        icon: Icon(Icons.arrow_right),
-                        onPressed: () => {},
-                      ),
                     ],
                   ),
                 ),
@@ -206,7 +204,7 @@ class _DiffPageState extends State<DiffPage> {
                         SignalNamer.instance.loadedProject.keys.toList(),
                         selectedProj,
                         (i) {
-                          selectedProj = i;
+                          selectedProj = -1;
                         },
                       ),
                     )),

@@ -25,7 +25,9 @@ class DirectoryPage extends StatefulWidget {
 class _DirectoryPageState extends State<DirectoryPage> {
   final GlobalKey<TooltipState> dirSearchTooltipkey = GlobalKey<TooltipState>();
   final GlobalKey<TooltipState> projModeTooltipkey = GlobalKey<TooltipState>();
+  final GlobalKey<TooltipState> dirExcToolTipKey = GlobalKey<TooltipState>();
 
+  String? rootDirectory = null;
   @override
   initState() {
     super.initState();
@@ -95,18 +97,26 @@ class _DirectoryPageState extends State<DirectoryPage> {
                     icon: Icon(Icons.difference),
                   ),
                 ),
-          IconButton(
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (BuildContext context) {
-                    return ExcludePage();
-                  },
-                ),
-              );
-            },
-            icon: Icon(Icons.cancel),
+          Tooltip(
+            key: dirExcToolTipKey,
+            triggerMode: TooltipTriggerMode.manual,
+            message: "Exclude Directories from being processed",
+            child: IconButton(
+              onPressed: (!SignalNamer.instance.excelMode)
+                  ? () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (BuildContext context) {
+                            return ExcludePage();
+                          },
+                        ),
+                      );
+                      reRunParseifNeeded();
+                    }
+                  : null,
+              icon: Icon(Icons.cancel),
+            ),
           ),
           IconButton(
             onPressed: () async {
@@ -197,71 +207,7 @@ class _DirectoryPageState extends State<DirectoryPage> {
     });
   }
 
-  _buildList() {
-    directoryList = [];
-    SignalNamer.instance.signalMap.keys.toList().forEach((signalName) {
-      directoryList.add(ListTile(
-        leading: IconButton(
-          icon: Icon(Icons.delete),
-          onPressed: () {
-            removeFromList(signalName);
-            setState(() {});
-            // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            //     content: Text("$signalName removed from list!"),
-            //     duration: Duration(seconds: 1),
-            //     action: SnackBarAction(
-            //         label: "Undo",
-            //         onPressed: () {
-            //           setState(() {
-            //             SignalNamer.instance.signalMap[lastDeletedKey] =
-            //                 lastDeleted;
-            //             directoryList = [];
-            //             _buildList();
-            //           });
-            //         })));
-          },
-        ),
-        tileColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: Colors.black, width: 1),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        style: ListTileStyle.list,
-        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-        title: Text(
-          signalName.split("/").last,
-          textScaleFactor: 2,
-        ),
-        subtitle: Text(signalName),
-        trailing: IconButton(
-          icon: Icon(Icons.chevron_right),
-          onPressed: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (BuildContext context) {
-                  return FileListPage(
-                    signalArray: SignalNamer.instance.signalMap[signalName],
-                    wasPushed: true,
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      ));
-    });
-  }
-
-  // Future<String?> _spawnAsyncDirFind(String result) async {
-  //   return await compute(SignalNamer.instance.directoryFind, result);
-  // }
-
-  loadDirectories() async {
-    activelyLoading = true;
-    setState(() {});
-
-    String? result = await getDir();
+  _loadFromDir(String? result) {
     if (result == null) {
       activelyLoading = false;
       setState(() {});
@@ -332,5 +278,81 @@ class _DirectoryPageState extends State<DirectoryPage> {
       ));
       _buildList();
     });
+  }
+
+  reRunParseifNeeded() {
+    SignalNamer.instance.signalMap = Map();
+    if (rootDirectory != null) {
+      _loadFromDir(rootDirectory);
+    }
+  }
+
+  _buildList() {
+    directoryList = [];
+    SignalNamer.instance.signalMap.keys.toList().forEach((signalName) {
+      directoryList.add(ListTile(
+        leading: IconButton(
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            removeFromList(signalName);
+            setState(() {});
+            // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            //     content: Text("$signalName removed from list!"),
+            //     duration: Duration(seconds: 1),
+            //     action: SnackBarAction(
+            //         label: "Undo",
+            //         onPressed: () {
+            //           setState(() {
+            //             SignalNamer.instance.signalMap[lastDeletedKey] =
+            //                 lastDeleted;
+            //             directoryList = [];
+            //             _buildList();
+            //           });
+            //         })));
+          },
+        ),
+        tileColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Colors.black, width: 1),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        style: ListTileStyle.list,
+        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+        title: Text(
+          signalName.split("/").last,
+          textScaleFactor: 2,
+        ),
+        subtitle: Text(signalName),
+        trailing: IconButton(
+          icon: Icon(Icons.chevron_right),
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (BuildContext context) {
+                  return FileListPage(
+                    signalArray: SignalNamer.instance.signalMap[signalName],
+                    wasPushed: true,
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ));
+    });
+  }
+
+  // Future<String?> _spawnAsyncDirFind(String result) async {
+  //   return await compute(SignalNamer.instance.directoryFind, result);
+  // }
+
+  loadDirectories() async {
+    activelyLoading = true;
+    setState(() {});
+
+    String? result = await getDir();
+    rootDirectory = result;
+    _loadFromDir(rootDirectory);
   }
 }

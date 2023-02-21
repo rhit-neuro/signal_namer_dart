@@ -415,6 +415,15 @@ class SignalNamer {
     }
   }
 
+  bool _advCompare(String compareTo, List<String> list2) {
+    for (String item in list2) {
+      if (compareTo.contains(item)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   String? directoryFind(String name) {
     var Dir = Directory(name);
 
@@ -425,8 +434,13 @@ class SignalNamer {
           LogManager.instance.addLog(
               "=============================================================");
           LogManager.instance.addLog("Processing: ${entity.path}");
-          findFromFile(entity.path);
-          signalMap[entity.path] = foundSignals;
+          bool excl = _advCompare(entity.path, excludeList);
+          if (excl) {
+            LogManager.instance.addLog("Excluding: ${entity.path}");
+          } else {
+            findFromFile(entity.path);
+            signalMap[entity.path] = foundSignals;
+          }
         }
       }
     } on FileSystemException catch (err) {
@@ -566,5 +580,160 @@ class SignalNamer {
     return decoder;
   }
 
-  fileDiff() {}
+  _checkSignalExists(List<Signal>? signals, Signal signalToFind) {
+    if (signals == null) {
+      return false;
+    }
+    List<Signal>? s = _getMatchingSignals(signals, signalToFind);
+    if (s == null) {
+      return false;
+    }
+    if (s.isEmpty) {
+      return false;
+    } else {
+      // print("Signal exists!");
+      return true;
+    }
+  }
+
+  _getMatchingSignals(List<Signal> signals, Signal signalToFind) {
+    return signals
+        .where((element) => element.signalName == signalToFind.signalName)
+        .toList();
+  }
+
+  _checkSignalsChanged(Signal original, Signal newSignal) {
+    print("${original.toString().compareTo(newSignal.toString())}");
+    return (original.toString().compareTo(newSignal.toString()) != -1);
+  }
+
+// Old diff method
+//   fileDiff() {
+//     List<DiffObject> diffs = [];
+//     for (String file in loadedProject.keys) {
+//       if (!signalMap.containsKey(file)) {
+//         // If the file has been deleted, delete everything in project
+//         for (Signal signal in loadedProject[file]!) {
+//           diffs.add(
+//             DiffObject.fromValues(
+//               type: DiffType.DELETED,
+//               newValue: signal,
+//             ),
+//           );
+//         }
+//       } else {
+//         for (Signal signal in loadedProject[file]!) {
+//           if (_checkSignalExists(signalMap[file]!, signal)) {
+//             // if the signal exists, check if it changed
+//             if (_checkSignalsChanged(
+//                 _getMatchingSignals(signalMap[file]!, signal)[0], signal)) {
+//               diffs.add(
+//                 DiffObject.fromValues(
+//                   type: DiffType.CHANGED,
+//                   oldValue: _getMatchingSignals(signalMap[file]!, signal)[0],
+//                   newValue: signal,
+//                 ),
+//               );
+//             }
+//           } else {
+//             // If not exists, delete
+//             diffs.add(
+//               DiffObject.fromValues(
+//                 type: DiffType.DELETED,
+//                 newValue: signal,
+//               ),
+//             );
+//           }
+//         }
+//       }
+//     }
+//     for (String file in signalMap.keys) {
+//       if (!loadedProject.containsKey(file)) {
+//         // If the file has been deleted, delete everything in project
+//         for (Signal signal in signalMap[file]!) {
+//           diffs.add(
+//             DiffObject.fromValues(
+//               type: DiffType.NEW,
+//               newValue: signal,
+//             ),
+//           );
+//         }
+//       } else {
+//         for (Signal signal in signalMap[file]!) {
+//           if (_checkSignalsChanged(
+//               _getMatchingSignals(loadedProject[file]!, signal)[0], signal)) {
+//             diffs.add(
+//               DiffObject.fromValues(
+//                 type: DiffType.CHANGED,
+//                 oldValue: _getMatchingSignals(loadedProject[file]!, signal)[0],
+//                 newValue: signal,
+//               ),
+//             );
+//           }
+//         }
+//       }
+//     }
+//     return diffs;
+//   }
+// }
+  fileDiff(String file1) {
+    print("Checking diffs for file: $file1");
+    List<DiffObject> diffs = [];
+    String splitVersion = file1.split("/").last.split(".").first;
+    if (signalMap[file1] != null) {
+      for (Signal signal in signalMap[file1]!) {
+        if (_checkSignalExists(loadedProject[splitVersion], signal)) {
+          if (_checkSignalsChanged(
+              _getMatchingSignals(loadedProject[splitVersion]!, signal)[0],
+              signal)) {
+            print("Signal changed!");
+            diffs.add(DiffObject.fromValues(
+              type: DiffType.CHANGED,
+              oldValue:
+                  _getMatchingSignals(loadedProject[splitVersion]!, signal)[0],
+              newValue: signal,
+            ));
+          } else {
+            print("Signal not changed");
+          }
+        } else {
+          diffs.add(DiffObject.fromValues(
+            type: DiffType.NEW,
+            newValue: signal,
+          ));
+        }
+      }
+    } else {
+      print("File didn't exist!!");
+    }
+    if (loadedProject[splitVersion] != null) {
+      for (Signal signal in loadedProject[splitVersion]!) {
+        if (!_checkSignalExists(signalMap[file1], signal)) {
+          diffs.add(DiffObject.fromValues(
+            type: DiffType.DELETED,
+            newValue: signal,
+          ));
+        }
+      }
+    } else {
+      print(
+          "File didn't exist in loaded project! : ${loadedProject[splitVersion]}");
+    }
+    // print("Diffs: $diffs");
+    return diffs;
+  }
+}
+
+enum DiffType {
+  NEW,
+  CHANGED,
+  DELETED,
+  UNKNOWN,
+}
+
+class DiffObject {
+  DiffType type = DiffType.UNKNOWN;
+  Signal? oldValue;
+  Signal? newValue;
+  DiffObject.fromValues({required this.type, this.oldValue, this.newValue});
 }
