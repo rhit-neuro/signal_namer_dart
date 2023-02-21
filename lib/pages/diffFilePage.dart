@@ -58,9 +58,21 @@ class _DiffFilePageState extends State<DiffFilePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text("File Diff"),
       ),
-      body: ListView(
-        children: tiles,
-      ),
+      body: (tiles.isEmpty)
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Center(
+                    child: Text(
+                  "No differences found",
+                  textScaleFactor: 2,
+                  style: TextStyle(color: Colors.grey),
+                ))
+              ],
+            )
+          : ListView(
+              children: tiles,
+            ),
     );
   }
 }

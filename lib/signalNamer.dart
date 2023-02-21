@@ -142,7 +142,17 @@ class SignalNamer {
             totalSignals++;
             currentSignal.signalName = res;
           } else if (property.toLowerCase() == "bit length") {
-            currentSignal.bitLength = res;
+            try {
+              currentSignal.bitLength = res;
+            } catch (e) {
+              errors.add(ErrorObj(
+                  content:
+                      "Format Error: Due to bugs in the Excel library, please change all bit Length fields to type number",
+                  line: -1,
+                  fileName: "System",
+                  fullLine: "N/A",
+                  type: "Invalid type"));
+            }
             // print("Big length ${res}");
           } else if (property.toLowerCase() == "is bus") {
             if (res == "Yes") {
@@ -159,7 +169,18 @@ class SignalNamer {
             currentSignal.fileName = res;
           } else if (property.toLowerCase() == "line number") {
             // print("line ${res}");
-            currentSignal.lineNumb = res;
+            try {
+              currentSignal.lineNumb = res;
+            } catch (e) {
+              errors.add(ErrorObj(
+                  content:
+                      "Format Error: Due to bugs in the Excel library, please change all lineNumb fields to type number",
+                  line: -1,
+                  fileName: "System",
+                  fullLine: "N/A",
+                  type: "Invalid type"));
+              return;
+            }
           } else if (property.toLowerCase() == "comment") {
             // print("comment ${res}");
             currentSignal.comment = res;
@@ -603,8 +624,8 @@ class SignalNamer {
   }
 
   _checkSignalsChanged(Signal original, Signal newSignal) {
-    print("${original.toString().compareTo(newSignal.toString())}");
-    return (original.toString().compareTo(newSignal.toString()) != -1);
+    // print("${original.toString().compareTo(newSignal.toString())}");
+    return !(original.toString().compareTo(newSignal.toString()) <= 0);
   }
 
 // Old diff method
@@ -677,7 +698,7 @@ class SignalNamer {
 //   }
 // }
   fileDiff(String file1) {
-    print("Checking diffs for file: $file1");
+    // print("Checking diffs for file: $file1");
     List<DiffObject> diffs = [];
     String splitVersion = file1.split("/").last.split(".").first;
     if (signalMap[file1] != null) {
@@ -686,7 +707,7 @@ class SignalNamer {
           if (_checkSignalsChanged(
               _getMatchingSignals(loadedProject[splitVersion]!, signal)[0],
               signal)) {
-            print("Signal changed!");
+            // print("Signal changed!");
             diffs.add(DiffObject.fromValues(
               type: DiffType.CHANGED,
               oldValue:
@@ -694,7 +715,7 @@ class SignalNamer {
               newValue: signal,
             ));
           } else {
-            print("Signal not changed");
+            // print("Signal not changed");
           }
         } else {
           diffs.add(DiffObject.fromValues(
